@@ -1,0 +1,21 @@
+{
+    "author": "mclean.brian.c@gmail.com",
+    "dependencies": {},
+    "keywords": [],
+    "name": "52-17",
+    "pebble": {
+        "displayName": "52/17",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "uuid": "685de094-eae4-4db5-8ee9-2585fe47710b",
+        "watchapp": {
+            "watchface": false
+        }
+    },
+    "version": "1.0.0"
+}
