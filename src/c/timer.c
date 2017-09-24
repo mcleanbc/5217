@@ -84,8 +84,9 @@ static void set_timer_length () {
 static void display_time_text() {
   if (wakeup_query(s_wakeup_id, &s_wakeup_timestamp)) {
     int countdown_display = s_wakeup_timestamp - time(NULL);
+    //Because this function runs only every minute, I've added code to handle rounding: round up except when there are 10 or fewer seconds left in the current minute
     if ((countdown_display % 60) <= 10) {
-      snprintf(timer_text, sizeof(timer_text), "%d", countdown_display / 60); // Set the minutes displayed so that they don't drop too quickly
+      snprintf(timer_text, sizeof(timer_text), "%d", countdown_display / 60);
     }
     else {
       int countdown_display_rounded_up = (countdown_display / 60) + 1;
