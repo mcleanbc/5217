@@ -1,17 +1,33 @@
 {
     "author": "mclean.brian.c@gmail.com",
-    "dependencies": {},
+    "dependencies": {
+        "pebble-clay": "^1.0.4"
+    },
     "keywords": [],
     "name": "52-17",
     "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
         "displayName": "52/17",
         "enableMultiJS": true,
-        "messageKeys": [],
+        "messageKeys": [
+            "workingTime",
+            "restingTime",
+            "displayTime"
+        ],
         "projectType": "native",
         "resources": {
             "media": []
         },
         "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk",
+            "diorite",
+            "emery"
+        ],
         "uuid": "685de094-eae4-4db5-8ee9-2585fe47710b",
         "watchapp": {
             "watchface": false

@@ -1,10 +1,12 @@
 #include <pebble.h>
 #define WORKING_TIME_DEFAULT 3120
 #define RESTING_TIME_DEFAULT 1020
+#define SETTINGS_KEY 5
 
 static Window *window;
 static TextLayer *time_text_layer;
 static TextLayer *status_text_layer;
+static TextLayer *clock_text_layer;
 static char timer_text[5];
 static int timer_addition = WORKING_TIME_DEFAULT;
 static bool timer_running = false;
@@ -27,10 +29,24 @@ enum Status {
   PAUSED_RESTING
 };
 
+typedef struct ClaySettings {
+  int working_time;
+  int resting_time;
+  bool display_clock;
+} ClaySettings;
+
+ClaySettings settings;
+
+static void prv_default_settings() {
+  settings.working_time = WORKING_TIME_DEFAULT;
+  settings.resting_time = RESTING_TIME_DEFAULT;
+  settings.display_clock = false;
+}
+
 static void set_defaults () {
   timer_status = WORKING;
-  timer_addition = WORKING_TIME_DEFAULT;
-  time_remaining = WORKING_TIME_DEFAULT;
+  timer_addition = settings.working_time;
+  time_remaining = settings.working_time;
   timer_running = false;
 }
 
@@ -41,13 +57,21 @@ static void set_background_color() {
     text_layer_set_background_color(time_text_layer, GColorBlack);
     text_layer_set_text_color(status_text_layer, GColorWhite);
     text_layer_set_text_color(time_text_layer, GColorWhite);
+    if (settings.display_clock) {
+      text_layer_set_background_color(clock_text_layer, GColorBlack);
+      text_layer_set_text_color(clock_text_layer, GColorWhite);
+    }
   }
   else if (timer_status == RESTING || timer_status == PAUSED_RESTING) {
     window_set_background_color(window, GColorWhite);
-    text_layer_set_background_color(status_text_layer, GColorWhite);
+    text_layer_set_background_color(status_text_layer, GColorWhite); 
     text_layer_set_background_color(time_text_layer, GColorWhite);
     text_layer_set_text_color(status_text_layer, GColorBlack);
     text_layer_set_text_color(time_text_layer, GColorBlack);
+    if (settings.display_clock) {
+      text_layer_set_background_color(clock_text_layer, GColorWhite);
+      text_layer_set_text_color(clock_text_layer, GColorBlack);
+    }
   }
 }
 
@@ -74,10 +98,10 @@ static void toggle_status() {
 
 static void set_timer_length () {
   if (timer_status == WORKING) {
-    timer_addition = WORKING_TIME_DEFAULT; 
+    timer_addition = settings.working_time; 
   }
   else if (timer_status == RESTING) {
-    timer_addition = RESTING_TIME_DEFAULT;
+    timer_addition = settings.resting_time;
   }
 }
 
@@ -114,6 +138,14 @@ static void set_resting_text() {
 
 void register_time (struct tm *tick_time, TimeUnits units_changed) {
   display_time_text();
+  if (settings.display_clock) {
+    time_t temp = time(NULL);
+    struct tm *tick_time = localtime(&temp);
+    static char s_buffer[8];
+    strftime(s_buffer, sizeof(s_buffer), "%I:%M%P", tick_time);
+    text_layer_set_text(clock_text_layer, s_buffer);
+    layer_mark_dirty(text_layer_get_layer(clock_text_layer));
+  }
 }
 
 static void set_timer () {
@@ -253,16 +285,40 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   
-  time_text_layer = text_layer_create(GRect(0, 35, bounds.size.w, 90));
-  text_layer_set_text_alignment(time_text_layer, GTextAlignmentCenter);
-  text_layer_set_font(time_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-  layer_add_child(window_layer, text_layer_get_layer(time_text_layer));
+  if (settings.display_clock) {
+    time_text_layer = text_layer_create(GRect(0, 25, bounds.size.w, 90));
+    text_layer_set_text_alignment(time_text_layer, GTextAlignmentCenter);
+    text_layer_set_font(time_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+    layer_add_child(window_layer, text_layer_get_layer(time_text_layer));
   
-  status_text_layer = text_layer_create(GRect(0, 95, bounds.size.w, 40));
-  text_layer_set_text_alignment(status_text_layer, GTextAlignmentCenter);
-  text_layer_set_font(status_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-  layer_add_child(window_layer, text_layer_get_layer(status_text_layer));
+    status_text_layer = text_layer_create(GRect(0, 85, bounds.size.w, 40));
+    text_layer_set_text_alignment(status_text_layer, GTextAlignmentCenter);
+    text_layer_set_font(status_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+    layer_add_child(window_layer, text_layer_get_layer(status_text_layer));
+    
+    clock_text_layer = text_layer_create(GRect(0, 135, bounds.size.w, 40));
+    text_layer_set_text_alignment(clock_text_layer, GTextAlignmentCenter);
+    text_layer_set_font(clock_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+    layer_add_child(window_layer, text_layer_get_layer(clock_text_layer));
+    
+    time_t temp = time(NULL);
+    struct tm *tick_time = localtime(&temp);
+    static char s_buffer[8];
+    strftime(s_buffer, sizeof(s_buffer), "%I:%M%P", tick_time);
+    text_layer_set_text(clock_text_layer, s_buffer);
+  }
+  else {
+    time_text_layer = text_layer_create(GRect(0, 35, bounds.size.w, 90));
+    text_layer_set_text_alignment(time_text_layer, GTextAlignmentCenter);
+    text_layer_set_font(time_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+    layer_add_child(window_layer, text_layer_get_layer(time_text_layer));
   
+    status_text_layer = text_layer_create(GRect(0, 95, bounds.size.w, 40));
+    text_layer_set_text_alignment(status_text_layer, GTextAlignmentCenter);
+    text_layer_set_font(status_text_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+    layer_add_child(window_layer, text_layer_get_layer(status_text_layer));
+  }
+
   text_layer_set_text(time_text_layer, timer_text);
   if (launch_reason() == APP_LAUNCH_WAKEUP) {
     end_countdown();
@@ -302,7 +358,32 @@ static void window_unload(Window *window) {
   text_layer_destroy(time_text_layer);
 }
 
+static void prv_save_settings() {
+  persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
+static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
+  Tuple *working_time_t = dict_find(iter, MESSAGE_KEY_workingTime);
+  settings.working_time = working_time_t->value->int32 * SECONDS_PER_MINUTE;
+  
+  Tuple *resting_time_t = dict_find(iter, MESSAGE_KEY_restingTime);
+  settings.resting_time = resting_time_t->value->int32 * SECONDS_PER_MINUTE;
+  
+  Tuple *display_clock_t = dict_find(iter, MESSAGE_KEY_displayTime);
+  settings.display_clock = display_clock_t->value->int32 == 1;
+  
+  prv_save_settings();
+}
+
+static void prv_load_settings() {
+  prv_default_settings();
+  persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
 static void init(void) {
+  prv_load_settings();
+  app_message_register_inbox_received(prv_inbox_received_handler);
+  app_message_open(128, 128);
   set_defaults();
   if (persist_exists(PERSIST_WAKEUP)) {
     s_wakeup_id = persist_read_int(PERSIST_WAKEUP);
