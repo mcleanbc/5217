@@ -22,7 +22,7 @@ module.exports = [
   {
     "type": "toggle",
     "messageKey": "displayTime",
-    "defaultValue": false,
+    "defaultValue": true,
     "label": "Display Current Time",
     "description": "Set whether to display the current time within the app."
   },
