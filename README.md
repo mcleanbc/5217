@@ -1,2 +1,2 @@
 # 5217
-A productivity timer
+A productivity timer for the Pebble smartwatch.
